@@ -7,7 +7,7 @@
 ### Hardware
 ---
 
-|Componente|Referencia|Link|
+|Componente|Referencia|Link a la pagina del fabricante|
 |----------|----------|----|
 |CPU|Intel core i7 5820k|[Link](https://ark.intel.com/es/products/82932/Intel-Core-i7-5820K-Processor-15M-Cache-up-to-3-60-GHz-)|
 |CPU Cooler|Cooler master hyper 212 evo|[Link](http://www.coolermaster.com/cooling/cpu-air-cooler/hyper-212-evo/)|
@@ -44,7 +44,64 @@ El microfono y los audifonos están conectados a la tarjeta de sonido USB y ést
 
 ## Pseudo Tutorial
 
-asdf
+### Consideraciones iniciales
+---
+Y digo **pseudo tutorial** porque no pretendo dar una lección exhaustiva que funcione en la mayoría de sistemas, sea pulcra y contenga la mejores practicas. Solo quiero explicar que método usé, como solucione los problemas que encontré en el camino y que configuraciones me funcionaron. Ademas vamos a tener que editar varios archivos de texto, en mi caso voy a usar el editor Vim, si desea usar otro editor solo debe cambiar la palabra vim de los comandos por el editor de texto que usted prefiera. Teniendo ésto en cuenta empecemos.
+
+
+1. **El CPU y las extenciones de virtualizacion:** Es vital que nuestro CPU soporte las extensiones de virtualización sean de Intel o AMD. estas extenciones en mi caso VT-x. Ademas de que nuestro procesador soporte las susodichas extenciones debemos tenerlas activadas en la BIOS.
+
+2. **Suficiente memoria RAM:** Es evidente que la cantidad de RAM necesaria para un equipo cambia dependiendo de que uso le demos, para éste caso (Juegos y edicion ligera de foto y vídeo ) no recomiendo menos de 12GB de RAM.
+
+3. **Más de una GPU:** Vamos a pasar una GPU completa a la maquina virtual, por lo que vamos a necesitar otra GPU para linux. En mi caso el CPU que uso no tiene GPU integrada, por lo que es absolutamente necesario que tenga una dos GPU's discretas, en caso de que el CPU tenga GPU integrada solo hace falta una GPU discreta.
+
+4. **Una GPU con soporte UEFI:** También es posible hacer el passthrough si la gráfica no soporta UEFI pero es necesario otro proceso. Aunque el punto que realmente quiero recalcar son las GPU's con múltiples BIOS. Mi GPU por ejemplo tiene dos BIOS y un interruptor para cambiarlas, por lo que es importante seleccionar la BIOS compatible con UEFI o el passthrough no será posible con éste método  
+
+5. **La grafica de Linux en el primer slot!!** Las placas madre tienen varios slots donde conectar las GPU's, en mi caso fue imposible hacer el passthrough si la GPU que usa Linux estaba en un slot diferente al primero.
+
+### Ahora si, manos a la obra
+
+#### Grub
+
+Debemos editar el archivo de configuración de Grub de la siguiente manera:
+
+En la terminal escribimos:
+```
+sudo nvim /etc/default/grub
+```
+Introducimos nuestra contraseña y nos encontraremos con un archivo que debemos editar de la siguiente forma:
+Buscamos en el archivo la linea que empieza de ésta forma:
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT=
+```
+
+Después del igual es posible que existan algunas palabras encerradas por commillas, en mi caso la linea completa es:
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+
+```
+
+Al final de la ultima palabra dejamos un espacio y agregamos las siguientes instrucciones: **iommu=pt iommu=1 intel_iommu=on**
+
+La linea en mi caso la linea queda así:
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash iommu=pt iommu=1 intel_iommu=on"
+
+```
+Guardamos el archivo y salimos del editor.
+
+Ejecutamos en la terminal:
+
+```
+sudo update-grub
+```
+Luego reiniciamos el equipo.
+
+### Dispositivos PCI
+
 
 El teclado y la tarjeta de sonido están conectadas a los puertos USB 3.1 de la placa madre esto es importante porque el controlador de USB 3.1 tambien se ha pasado a la maquina virtual a diferencia del mouse que simplemente se añadio como un dispositivo , esto resolvio varios problema de inestabilidad con los dipositivos USB,
 
