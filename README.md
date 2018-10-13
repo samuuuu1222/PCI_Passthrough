@@ -38,9 +38,12 @@
 
 Mi sistema operativo principal es Kubuntu (Linux) lo uso para navegar en Internet, programar, estudiar etc, básicamente para todo lo que no utilice la GPU. Para todo\* lo que si utiliza la GPU uso Windows, es decir: Juegos y edición de foto y vídeo. Por lo tanto solo enciendo la maquina virtual cuando la necesito.
 
-Ambas tarjetas graficas están conectadas al mismo monitor la GPU 1 (Linux) está conectada mediante VGA y la GPU 2 (Windows) está conectada mediante HDMI cuando deseo utilizar windows simplemente cambio la entrada del monitor a HDMI, posteriormente con un comando de Synergy activo el teclado y el mouse en uno u otro sistema.
+Ambas tarjetas gráficas están conectadas al mismo monitor la GPU 1 (Linux) está conectada mediante VGA y la GPU 2 (Windows) está conectada mediante HDMI cuando deseo utilizar windows simplemente cambio la entrada del monitor a HDMI, posteriormente con un comando de Synergy activo el teclado y el mouse en uno u otro sistema.
 
-El microfono y los audifonos están conectados a la tarjeta de sonido USB y ésta se ha pasado a la maquina virtual, esto me permite tener audio de relativamente buena calidad en Windows y aparte usar el chat de voz, pero tambien significa que mientras esté usando la maquina virtual no tengo audio en linux a menos que conecte otro dispositvo de audio.
+El micrófono y los audífonos están conectados a la tarjeta de sonido USB y ésta se ha pasado a la maquina virtual, esto me permite tener audio de relativamente buena calidad en Windows y aparte usar el chat de voz, pero tambien significa que mientras esté usando la maquina virtual no tengo audio en linux a menos que conecte otro dispositvo de audio.
+
+## ¿Cómo funciona?
+(por escribir)
 
 ## Pseudo Tutorial
 
@@ -60,10 +63,11 @@ Y digo **pseudo tutorial** porque no pretendo dar una lección exhaustiva que fu
 5. **La grafica de Linux en el primer slot!!** Las placas madre tienen varios slots donde conectar las GPU's, en mi caso fue imposible hacer el passthrough si la GPU que usa Linux estaba en un slot diferente al primero.
 
 ### Ahora si, manos a la obra
+---
 
 #### Grub
 
-Debemos editar el archivo de configuración de Grub de la siguiente manera:
+Primero vamos a activar iommu y para ésto debemos editar el archivo de configuración de Grub de la siguiente manera:
 
 En la terminal escribimos:
 ```
@@ -100,7 +104,68 @@ sudo update-grub
 ```
 Luego reiniciamos el equipo.
 
+#### Grupos IOMMU
+
+Vamos a verificar que el paso anterior funcionó correctamente y ademas que nuestros grupos IOMMU sean favorables para hacer el passthrough, para ésto vamos a usar el siguiente script tomado [Levelonetechs](https://forum.level1techs.com/t/ubuntu-17-04-vfio-pcie-passthrough-kernel-update-4-14-rc1/11963k)
+
+```
+#!/bin/bash
+for d in /sys/kernel/iommu_groups/*/devices/*; do
+  n=${d#*/iommu_groups/*}; n=${n%%/*}
+  printf 'IOMMU Group %s ' "$n"
+  lspci -nns "${d##*/}"
+done
+
+```
+Para usarlo debemos escribir en la terminal los siguiente comandos
+
+```
+cd ~
+nvim iommu-script.sh
+```
+Luego debemos copiar el script y pegarlo en nuestro editor de texto (normalmente en una terminal se puede pegar usando Ctrl+shift+v), guardamos el documento y salimos del editor, luego escribimos los siguientes comandos:
+
+```
+chmod +x iommu-script.sh
+./iommu-script.sh
+```
+Ésto nos mostrará un resultado similar a éste (este es una fraccion del resultado de correr el script en mi maquina):
+
+```
+IOMMU Group 28 00:1f.3 SMBus [0c05]: Intel Corporation C610/X99 series chipset SMBus Controller [8086:8d22] (rev 05)                                        
+IOMMU Group 29 03:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Hawaii PRO [Radeon R9 290/390] [1002:67b1] (rev 80)         
+IOMMU Group 29 03:00.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Hawaii HDMI Audio [Radeon R9 290/290X / 390/390X] [1002:aac8]            
+IOMMU Group 2 ff:0f.0 System peripheral [0880]: Intel Corporation Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Agent [8086:2ff8] (rev 02)                    
+IOMMU Group 2 ff:0f.1 System peripheral [0880]: Intel Corporation Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Agent [8086:2ff9] (rev 02)                    
+IOMMU Group 2 ff:0f.4 System peripheral [0880]: Intel Corporation Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers [8086:2ffc] (rev 02)
+IOMMU Group 2 ff:0f.5 System peripheral [0880]: Intel Corporation Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers [8086:2ffd] (rev 02)
+IOMMU Group 2 ff:0f.6 System peripheral [0880]: Intel Corporation Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers [8086:2ffe] (rev 02)
+IOMMU Group 30 04:00.0 VGA compatible controller [0300]: NVIDIA Corporation G94GL [Quadro FX 1800] [10de:0638] (rev a1)                                   
+IOMMU Group 31 06:00.0 USB controller [0c03]: VIA Technologies, Inc. VL805 USB 3.0 Host Controller [1106:3483] (rev 01)                                     
+IOMMU Group 32 07:00.0 USB controller [0c03]: ASMedia Technology Inc. ASM1142 USB 3.1 Host Controller [1b21:1242]                                           
+```
+
+El anterior es una lista con los dispotivos pci que tenemos en nuestra maquina, de éste resultado nos interesan por ahora lo que tenga que ver con nuestras GPU's, en mi caso son las siguientes lineas:
+
+```
+
+IOMMU Group 29 03:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Hawaii PRO [Radeon R9 290/390] [1002:67b1] (rev 80)         
+IOMMU Group 29 03:00.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Hawaii HDMI Audio [Radeon R9 290/290X / 390/390X] [1002:aac8]            
+IOMMU Group 30 04:00.0 VGA compatible controller [0300]: NVIDIA Corporation G94GL [Quadro FX 1800] [10de:0638] (rev a1)                                   
+```
+
+Es importante notar que si bien tengo unicamente dos GPU's en mi equipo he listado tres lineas del script anterior, y esto se debe a que algunas GPU's tienen ademas un controlador de audio, esto será importante más adelante.
+
+De éstas lineas nos dos varias cosas:
+
+1. **IOMMU Group:** El numero que se encuentra luego de estas palabras es el grupo al que pertenece nuestras GPU's, en mi caso la GPU AMD se encuentra el en grupo 29 y la Nvidia en el grupo 30. Es vital que la GPU que querramos pasar a la maquina virtual sea el único elemento en ese grupo (en caso de que la GPU tenga controlador de audio integrado éste también debe estar el en mismo grupo que la GPU) si éste no es el caso se debe aplicar un parche al kernel (ACS) lo cual no voy a cubrir en éste documento.
+
+2. **Los numeros en corchetes al final de la linea:** Estos son conocidos como **Identificador de dispositivos PCI** o **PCI device IDs** en ingles, en el caso de mi GPU r9 390 **1002:67b1** y el controlador de audio **1002:aac8**. Es importante que anotemos estos numeros, tanto el de la GPU como el del controlador de audio (si es el caso) de la GPU que a la cual vamos a hacerle el passthrough.
+
+
 ### Dispositivos PCI
+
+
 
 
 El teclado y la tarjeta de sonido están conectadas a los puertos USB 3.1 de la placa madre esto es importante porque el controlador de USB 3.1 tambien se ha pasado a la maquina virtual a diferencia del mouse que simplemente se añadio como un dispositivo , esto resolvio varios problema de inestabilidad con los dipositivos USB,
