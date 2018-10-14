@@ -4,8 +4,26 @@ Por *David Londoño Montoya*.
 
 ## Tabla de contenidos
 
-* auto-gen TOC:
-{:toc}
+* [Indroducción](#indroducción)
+    * [Algunas notas antes de empezar](#algunas-notas-antes-de-empezar)
+* [Mi "setup"](#mi-setup)
+    * [Hardware](#-hardware)
+    * [Software](#-software)
+    * [¿Cómo utilizo mi setup?](#-cómo-utilizo-mi-setup)
+* [¿Cómo funciona?](#cómo-funciona)
+* [Pseudo Tutorial](#pseudo-tutorial)
+    * [Consideraciones iniciales](#-consideraciones-iniciales)
+    * [Ahora si, manos a la obra](#-ahora-si-manos-a-la-obra)
+         * [Grub](#grub)
+         * [Grupos IOMMU](#grupos-iommu)
+         * [El driver de la GPU](#el-driver-de-la-gpu)
+         * [Configuraciones del host](#configuraciones-del-host)
+    * [Creando la maquina virtual.](#creando-la-maquina-virtual)
+         * [Consideraciones iniciales](#consideraciones-iniciales)
+         * [Pasos para la creación de una maquina virtual usando virt-manager](#pasos-para-la-creación-de-una-maquina-virtual-usando-virt-manager)
+         * [Instalando Windows](#instalando-windows)
+* [Optimizaciones y configuraciones adicionales](#optimizaciones-y-configuraciones-adicionales)
+* [Referencias y agradecimientos](#referencias-y-agradecimientos)
 
 ## Indroducción
 
@@ -16,11 +34,18 @@ Nuestro objetivo será crear una maquina virtual con **Windows 10** donde podamo
 ### Algunas notas antes de empezar
 + Si bien se que son dos cosas diferentes, por cuestiones de simplicidad voy a usar de manera indiferente el termino "Tarjeta gráfica" y "GPU"
 
-+ Voy a usar algunas abreviaciones como CPU (Procesador), VM (Maquina virtual)
-
 + Voy a suponer que el lector tiene instalado un sistema operativo basado en Ubuntu 18.04 (Kubuntu en mi caso)
 
 + Ademas espero que el lector tenga experiencia instalando Windows (cosa que no voy a explicar en detalle)
+
+**Abreviaciones**
+
+|Abreviación|Descripcion|
+|-----------|-----------|
+|CPU|Procesador|
+|Gest|sistema que corre en la VM|
+|Host|sistema "principal" en el que corre la VM|
+|VM|Maquina virtual|
 
 ## Mi "setup"
 
@@ -51,6 +76,7 @@ Nuestro objetivo será crear una maquina virtual con **Windows 10** donde podamo
 |S.O (Gest)|Windows 10|
 |Uso compartido de mouse y teclado|Synergy
 |Gestor de maquinas virtuales|Virt-manager|
+|||
 
 
 ### ¿Cómo utilizo mi setup?
@@ -66,6 +92,8 @@ El micrófono y los audífonos están conectados a la tarjeta de sonido USB y é
 (por escribir)
 
 ## Pseudo Tutorial
+
+
 
 ### Consideraciones iniciales
 ---
@@ -88,7 +116,7 @@ Y digo **pseudo tutorial** porque no pretendo dar una lección exhaustiva que fu
 
 8. **El tema del sonido...** El sonido es algo complicado, hay varias formas de de obtener sonido desde la maquina virtual, pero en mi experiencia la mejor solución es comprar una tarjeta de audio USB (puede ser una extremadamente barata) y pasarla a la maquina virtual, es una solución solida y barata. También existe la opción de pasar la tarjeta de sonido de la placa madre, pero ésto no le he probado, por lo que no puedo hacer comentarios al respecto.
 
-### Ahora si, manos a la obra
+### Configuraciones del host
 ---
 
 #### Grub
